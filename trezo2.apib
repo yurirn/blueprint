@@ -1,0 +1,1452 @@
+FORMAT: 1A
+HOST: XXXX.trezoshop.com/rest/v1
+
+# Trezo APIv1
+Esta documentação tem por objetivo classificar e definir a relação técnica de integração entre API do e-commerce para integração com ERP.
+
+## Autenticação
+A API utilizará autenticação informando chave pelo HEADER da conexão.
+Será fornecido pela Trezo a chave de autenticação. Para ambientes de produção, as requisições devem ser efetuadas utilizando-se de HTTPS (protocolo HTTP Seguro).
+
+## Imagens
+Todas as imagens enviadas pela integração serão no formato BASE64. As imagens devem ser informadas na extensão JPG, GIF e PNG.
+
+## Métodos
+
+A Trezo-WS utiliza o padrão REST através doo protocolo HTTPS. Os métodos variam de acordo com a função utilizada:
+
+| Método | Ação                  |
+|--------|-----------------------|
+| `GET`  | Consulta              |
+| `POST` | Inseração/Atualização |
+
+## Tipo de dados
+
+| Tipo      | Formato               |
+|-----------|-----------------------|
+| string    | "texto"               |
+| bolean    | false                 |
+| integer   | 10                    |
+| double    | 10.2                  |
+| text      | "texto"               |
+| objeto    | {}                    |
+| date      | "2016-11-28 00:00:00" |
+| mimetype  | "image/png"           |
+| base64    | dGVzdGU=              |
+
+## URL Base API
+| URL Staging (*testes*)      |
+|-----------------------------|
+|http://XXXXX.trezoshop.com/rest/v1|
+
+| URL Production (*produção*) |
+|-----------------------------|
+|http://www.XXXXX.com.br/rest/v1 (***Não oficial/publicado***)|
+
+## Código de Status HTTPS
+
+| Código | Status                |
+|--------|-----------------------|
+| 200    | OK                    |
+| 400    | Bad Request           |
+| 401    | Unauthorized          |
+| 403    | Forbidden             |
+| 404    | Not Found             |
+| 500    | Internal Server Error |
+
+## Retornos com ERROS
+
+Todos os retornos com erros serão retornados com o `BODY` no formato:
+
+| Campo        | Tipo            | Observação |
+|--------------|-----------------|------------|
+| `success`    | boolean         | `false`    |
+| `message`    | text            | Mensagem com a descrição do erro |
+
+- Exemplo:
+    ```js:
+    {
+        "success": false,
+        "message": "Fromato JSON incorreto"
+    }
+    ```
+
+Nos casos de validação de dados ou erros específicos, poderá ser retornado no próprio item a definição e descrição do erro
+
+- Exemplo:
+    ```js:
+    [
+        {
+            "sku": "vinho-marca-1999",
+            "success": false,
+            "message": "SKU não encontrado"
+        },
+        {
+            "sku": "vinho-marca-2016",
+            "success": true
+        }
+    ]
+    ```
+
+# Produtos [/products]
+Todos os recursos de API de produtos.
+
+##  Salvar produto [POST /products]
+
+* Recomendamos que o envio seja feito em forma de lotes, enviando de 100 em 100 produtos por vez, por exemplo.
+
+| Campo                                   | Tipo    | Descrição  |
+|-----------------------------------------|---------|------------|
+| `sku` <br>**obrigatório**               | string  | Código SKU <br>**Obs**: É a unidade identificadora do produto na Loja, um ID de produto.
+| `name` <br>**obrigatório**              | string  | Nome       |
+| `price` <br>**obrigatório**             | double  | Preço      <br>**Obs**: Preço sem desconto, que é enviado na api de preços |
+| `description` <br>**obrigatório**       | text    | Descrição  <br>**Obs**: Aceita HTML |
+| `short_description` <br>**obrigatório** | text    | Descrição curta <br>**Obs**: Aceita HTML |
+| `enabled` <br>**obrigatório**           | boolean | Ativo      <br>**Obs**: Produto está habilitado ou desabilitado
+| `ean`                                   | string  | Código EAN <br>**Obs**: Código de barras, obrigatório para integrações com o Google e marketplaces |
+| `height`                                | integer | Altura     <br>**Obs**: Em centímetros |
+| `width`                                 | integer | Largura    <br>**Obs**: Em centímetros |
+| `length`                                | integer | Comprimento <br>**Obs**: Em centímetros |
+| `weight` <br>**obrigatório**            | integer | Peso       <br>**Obs**: Em gramas      |
+| `category_ids`                          | array   | Id de categorias do produto       <br>**Obs**: Em forma de lista: [57, 59]      |
+| [**attributes**](#Attribute)*           | ***object*** | Atributos adicionais as informações do produto |
+
+***Attribute*** <a name="Attribute"></a>
+
+| Campo          | Tipo     |
+|----------------|----------|
+| `attribute_id` | integer  |
+| `value_id`     | integer  |
+
+
+* Ao efetuar um update, desconsiderar os campos marcados como obrigatórios. É obrigatório apenas ``sku``
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
+    + Body
+
+            [
+                {
+                    "sku": "vinho-marca-2013",
+                    "name": "Vinho Marca 2013",
+                    "price": 1.99,
+                    "description": "Descrição comprida (aceita HTML)",
+                    "short_description": "Descrição curta (aceita HTML)",
+                    "enabled": true,
+                    "ean": "016832",
+                    "height": 30,
+                    "width": 21,
+                    "length": 15,
+                    "weight": 300,
+                    "category_ids": [58,57],
+                    "attributes": [
+                        {
+                            "attribute_id": 123,
+                            "values":
+                                [
+                                    {"value_id": 11},
+                                    {"value_id": 12}
+                                ]
+                        },
+                        {"attribute_id": 123, "value_id": 13},
+                        {"attribute_id": 101, "value": "Cor rubi concentrada, borda purpúrea luminosa. Nariz maduro de frutas vermelhas, chocolate e especiarias doces. Os taninos estão muito finos, o conjunto fácil de gostar, encorpado e muito persistente."}
+                    ]
+                },
+                {
+                    "name": "Luigi Bosca Malbec DOC 2013 (750ml)",
+                    "description": "Descrição comprida (aceita HTML)",
+                    "short_description": "Descrição curta (aceita HTML)",
+                    "sku": "vinho-2013-7972",
+                    "price": 1.99,
+                    "enabled": true,
+                    "ean": "016833",
+                    "height": 30,
+                    "width": 21,
+                    "length": 15,
+                    "weight": 300,
+                    "category_ids": [57,63],
+                    "configurable": {
+                        "skus": ["00002910", "00003715", "009025", "00173113"],
+                        "attributes": [1068, 1069]
+                    }
+                }
+            ]
+
++ Response 200 (application/json)
+    + Body
+
+            [
+                {"sku": "vinho-marca-2013", "success": true},
+                {"sku": "vinho-marca-2016", "success": false, "message": "Campo attributes com formato incorreto"}
+            ]
+
+##  Listar produtos [GET /products{?limit,page,lastERPUpdate}]
+
+* No Header da Response é possível obter informações como o número de objetos e páginas (vide exemplos)
+
++ Parameters
+    + page: `3` (number, optional) - A **página** da coleção de clientes que será retornado.
+        + Default: `1`
+    + limit: `100` (number, optional) - A **quantidade limite** que deseja retornar da lista de clientes.
+        + Default: `100`
+    + lastERPUpdate: `2016-11-28 00:00:0` (date, optional) - A data da ultima busca que o ERP fez na API para clientes. Retorna apenas os clientes que tiveram dados atualizados após a última integração.
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
++ Response 200 (application/json)
+
+
+    + Headers
+
+            Totalcount: 7 (o número total de objetos com o filtro especificado.)
+            Totalpages: 2 (o número total de páginas com o filtro especificado.)
+
+    + Body
+
+            [
+                {
+                    "entity_id": "5893",
+                    "entity_type_id": "4",
+                    "attribute_set_id": "4",
+                    "type_id": "simple",
+                    "sku": "vinho-marca-20160",
+                    "has_options": "0",
+                    "required_options": "0",
+                    "created_at": "2017-01-06 11:15:27",
+                    "updated_at": "2017-01-06 17:38:03",
+                    "volume_altura": "30",
+                    "volume_largura": "21",
+                    "volume_comprimento": "15",
+                    "tax_class_id": "0",
+                    "visibility": "4",
+                    "status": "1",
+                    "tanicos": "244",
+                    "estagio": "260",
+                    "description": null,
+                    "short_description": null,
+                    "name": "vinho-marca-20160",
+                    "ean": "016832",
+                    "options_container": "container2",
+                    "castas": "Não Especificado",
+                    "url_key": "vinho-marca-20160",
+                    "url_path": "vinho-marca-20160",
+                    "image": "no_selection",
+                    "small_image": "no_selection",
+                    "thumbnail": "no_selection",
+                    "image_label": null,
+                    "small_image_label": null,
+                    "thumbnail_label": null,
+                    "price": "1.9900",
+                    "final_price": "1.00",
+                    "weight": "300.0000",
+                    "special_from_date": null,
+                    "stock_item": {},
+                    "category_ids": [57,63],
+                    "children_ids": []
+                }
+            ]
+
+##  Remover produto [DELETE /products/sku/{sku}]
+
++ Parameters
+    + sku: `vinho-marca-2013` (string) - O **Sku** do produto que deseja excluir.
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
++ Response 200 (application/json)
+
+    + Body
+
+            { "success": true }
+
+##  Salvar estoque [POST /stocks]
+
+| Campo                                    | Tipo    | Descrição  |
+|------------------------------------------|---------|------------|
+| `sku` <br>**obrigatório**                | string  |
+| `qty` <br>**obrigatório**                | integer | Quantidade em estoque |
+| `in_stock`                               | boolean | Status do estoque [Em estoque (`true`), Esgotado (`false`) <br>**Obs**:  Se não for informado, in_stock será `true` se `qty > 0` |
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
+    + Body
+
+            [
+                {
+                    "sku": "vinho-marca-2013",
+                    "qty": 21,
+                    "in_stock": true
+                },
+                {
+                    "sku": "vinho-marca-2016",
+                    "qty": 0,
+                    "in_stock": false
+                }
+            ]
+
++ Response 200 (application/json)
+    + Body
+
+            [
+                {"sku": "vinho-marca-2013", "success": true},
+                {"sku": "vinho-marca-2015", "success": false, "message": "Sku não encontrado"}
+            ]
+
+##  Listar estoques [GET /stocks{?limit,page,website_id,is_in_stock}]
+
+* No Header da Response é possível obter informações como o número de objetos e páginas (vide exemplos)
+
++ Parameters
+    + page: `3` (number, optional) - A **página** da coleção de clientes que será retornado.
+        + Default: `1`
+    + limit: `500` (number, optional) - A **quantidade limite** que deseja retornar da lista de clientes.
+        + Default: `100`
+    + website_id: `1` (number, optional) - O **id** do website que deve retornar a lista de estoques.
+    + is_in_stock: `1` (number, optional) - Flag para retornar estoques > 0 (em estoque).
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
++ Response 200 (application/json)
+
+
+    + Headers
+
+            Totalcount: 7 (o número total de objetos com o filtro especificado.)
+            Totalpages: 2 (o número total de páginas com o filtro especificado.)
+
+    + Body
+
+            [
+                {
+                    "sku": "vinho-marca-20160",
+                    "qty": "0.0000",
+                    "product_id": "10667",
+                    "min_qty": "0.0000",
+                    "is_in_stock": "0",
+                    "manage_stock": "0",
+                    "type_id": "simple",
+                    "item_id": "8227"
+                },
+                {
+                    "sku": "00049414",
+                    "qty": "10.0000",
+                    "product_id": "10666",
+                    "min_qty": "0.0000",
+                    "is_in_stock": "1",
+                    "manage_stock": "1",
+                    "type_id": "simple",
+                    "item_id": "8226"
+                }
+            ]
+
+##  Salvar preço [POST /prices]
+
+| Campo                                  | Tipo    | Descrição  |
+|----------------------------------------|---------|------------|
+| `sku` <br>**obrigatório**              | string  |
+| `price` <br>**obrigatório**            | integer | Preço do produto |
+| `special_price`                        | double  | Preço especial, com desconto. (Exemplo: DE R$ XX, por R$ YY |
+| `special_from_date`                    | date    | Data inicial em que o preço especial será aplicado |
+| `special_to_date`                      | date    | Data final em que o preço especial estará válido   |
+
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
+    + Body
+
+            [
+                {
+                    "sku": "vinho-marca-2013",
+                    "price": 9.99
+                },
+                {
+                    "sku": "vinho-marca-2016",
+                    "price": 29,
+                    "special_price": 19.80
+                }
+            ]
+
++ Response 200 (application/json)
+    + Body
+
+            [
+                {"sku": "vinho-marca-2013", "success": true},
+                {"sku": "vinho-marca-2016", "success": false, "message": "Mensagem ERRO"}
+            ]
+
+##  Salvar imagens [POST /images]
+
+| Campo                                   | Tipo     | Descrição |
+|-----------------------------------------|----------|-----------|
+| `sku` <br>**obrigatório**               | string   | Sku do produto |
+| `is_default` <br> *default*: `false`    | boolean  | Se a imagem é a padrão para ser utilizada na listagem de produtos |
+| `code` <br>**obrigatório**              | string   | Código identificador da imagem |
+| `position`                              | integer  | Ordem de exibição das imagens |
+| `image` <br>**obrigatório**             | base64   | Imagem em BASE64 |
+| `image_mimetype` <br>**obrigatório**    | mimetype | Tipo/formato da imagem <br>**Obs**: Tipos possíveis de imagem: `image/png`, `image/jpeg`, `image/gif`
+| `image_name` <br>**obrigatório**        | string   | Nome o arquivo da imagem <br>**Obs**: Preferêncialmente enviar sem a extensão do arquivo (.png, .jpg) |
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
+    + Body
+
+            [
+                {"sku": "vinho-marca-2013", "is_default": true, "code": "vinho-2013", "position": 2, "image": "base64,iVBORw0KGgoAAAANSUhEUgAAB3IAAAOTCAYAAABKFkJEAAAajElEQVR4nOzBAQEAAACAkP6v7ggKAAAACA24MDAQAAAABB/tYrDFABAAAAAsAR7oQAB1B4ojQAAAABJRU5ErkJggg=="},
+                {"sku": "vinho-marca-2016", "code": "vinho-2016-img2", "image": "base64,iVBORw0KGgoAAAANSUhEUgAAB3IAAAOTCAYAAABKFkJEAAAajElEQVR4nOzBAQEAAACAkP6v7ggKAAAACA24MDAQAAAABB/tYrDFABAAAAAsAR7oQAB1B4ojQAAAABJRU5ErkJggg=="}
+            ]
+
++ Response 200 (application/json)
+    + Body
+
+            [
+                {"sku": "vinho-marca-2013", "success": true, "code": "vinho-2013"},
+                {"sku": "vinho-marca-2016", "success": false, "code": "vinho-2016-img2", "message": "Mensagem ERRO"}
+            ]
+
+##  Remover imagem [DELETE /images/code/{code}]
+
++ Parameters
+    + code: `vinho-2016-img2` (string) - O **código da imagem** que deseja excluir.
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
++ Response 200 (application/json)
+
+    + Body
+
+            { "success": true }
+
+##  Remover todas as imagens de um SKU [DELETE /images/sku/{sku}]
+
++ Parameters
+    + sku: `vinho-marca-2016` (string) - O **sku do produto** que deseja excluir as imagens.
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
++ Response 200 (application/json)
+
+    + Body
+
+            { "success": true }
+
+# Categorias [/categories]
+
+##  Listar categorias [GET /categories{?id,limit,page,lastERPUpdate}]
+
+* No Header da Response é possível obter informações como o número de objetos e páginas (vide exemplos)
+
++ Parameters
+    + id: `99` (number, optional) - O **código da categoria** que deseja consultar.
+    + page: `3` (number, optional) - A **página** da coleção de categorias que será retornado.
+        + Default: `1`
+    + limit: `100` (number, optional) - A **quantidade limite** que deseja retornar da lista de categorias.
+        + Default: `100`
+    + lastERPUpdate: `2016-11-28 00:00:00` (date, optional) - A data da ultima busca que o ERP fez na API para categorias. Retorna apenas os categorias que tiveram dados atualizados após a última integração.
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
++ Response 200 (application/json)
+
+
+    + Headers
+
+            Totalcount: 7 (o número total de objetos com o filtro especificado.)
+            Totalpages: 2 (o número total de páginas com o filtro especificado.)
+
+    + Body
+
+            [
+                {
+                    "id": "58",
+                    "entity_id": "58",
+                    "entity_type_id": "3",
+                    "attribute_set_id": "3",
+                    "parent_id": "2",
+                    "created_at": "2016-12-20 15:22:39",
+                    "updated_at": "2016-12-20 17:56:49",
+                    "path": "1/2/58",
+                    "position": "10",
+                    "level": "2",
+                    "children_count": "0",
+                    "description": null,
+                    "meta_keywords": null,
+                    "meta_description": null,
+                    "custom_layout_update": null,
+                    "available_sort_by": null,
+                    "name": "Todos",
+                    "url_key": "todos",
+                    "meta_title": null,
+                    "creareseo_heading": null,
+                    "display_mode": "PRODUCTS",
+                    "custom_design": null,
+                    "page_layout": null,
+                    "url_path": "todos",
+                    "is_active": "1",
+                    "include_in_menu": "1",
+                    "landing_page": null,
+                    "is_anchor": "0",
+                    "custom_use_parent_settings": "0",
+                    "custom_apply_to_products": "0",
+                    "custom_design_from": null,
+                    "custom_design_to": null,
+                    "filter_price_range": null
+                },
+                {
+                    "id": "57",
+                    "entity_id": "57",
+                    "entity_type_id": "3",
+                    "attribute_set_id": "3",
+                    "parent_id": "2",
+                    "created_at": "2016-11-10 17:02:46",
+                    "updated_at": "2016-11-28 13:35:14",
+                    "path": "1/2/57",
+                    "position": "9",
+                    "level": "2",
+                    "children_count": "0",
+                    "meigee_cat_icon": null,
+                    "description": null,
+                    "meta_keywords": null,
+                    "meta_description": null,
+                    "custom_layout_update": null,
+                    "available_sort_by": null,
+                    "name": "Mais Pedidos",
+                    "url_key": "mais-pedidos",
+                    "meta_title": null,
+                    "creareseo_heading": null,
+                    "display_mode": "PRODUCTS",
+                    "custom_design": null,
+                    "page_layout": "two_columns_left",
+                    "url_path": "mais-pedidos",
+                    "is_active": "1",
+                    "include_in_menu": "0",
+                    "landing_page": null,
+                    "is_anchor": "0",
+                    "custom_use_parent_settings": "0",
+                    "custom_apply_to_products": "0",
+                    "custom_design_from": null,
+                    "custom_design_to": null,
+                    "filter_price_range": null
+                }
+            ]
+
+# Atributos [/attributes]
+
+* Atributos são valores adicionais de informação(ões) que um produto possui, detalhando as características do mesmo, como por exemplo uma camiseta que possui como atributos: tamanho e cor. Dentro de tamanho temos alguns valores, como P, M e G e assim por diante.
+
+##  Salvar atributos [POST /attributes]
+
+| Campo                                   | Tipo         | Descrição           |
+|-----------------------------------------|--------------|---------------------|
+| `attribute_name` <br>**obrigatório**    | string       | Nome do atributo    |
+| `attribute_id` <br>**obrigatório (apenas no update)**     | integer  | Id do atributo            |
+| `reference_id` <br>**obrigatório**      | string       | Referencia do atributo <br>**Obs**: Utilizado apenas para 'linkar' o atributo no retorno da API, não é salvo por parte do ecommerce essa informação. <br />É utilizado o `attribute_id` no cadastro do produto.  |
+| [**type**](#Type)* <br>**obrigatório**  | ***type***   | Tipo do atributo    |
+| [**values**](#Values)*                  | ***object*** | Valores do atributo |
+
+***Type*** <a name="Type"></a>
+
+| Valor          | Campo                                                 |
+|----------------|-------------------------------------------------------|
+| `unique`       | Campo único no cadastro do produto                    |
+| `multiple`     | Campos com vários valores no cadastro do produto      |
+| `text`         | Campo de texto a ser informado no cadastro do produto |
+
+***Values*** <a name="Values"></a>
+
+| Campo                              | Tipo     | Descrição                 |
+|------------------------------------|----------|---------------------------|
+| `value_id` <br>**obrigatório (apenas no update)**     | integer  | Id do Valor            |
+| `value_name` <br>**obrigatório**   | string   | Nome da opção do atributo |
+| `reference_id` <br>**obrigatório**      | string       | Referencia do atributo <br>**Obs**: Utilizado apenas para 'linkar' o atributo no retorno da API, não é salvo por parte do ecommerce essa informação. <br />É utilizado o `attribute_id` no cadastro do produto.  |
+
+* Para atualizar um atributo, basta passar o campo `attribute_id` no body e seu respectivo valor.
+* Para atualizar um valor, basta passar o campo `value_id` no body e seu(s) respectivo(s) valor(es).
+* Ao efetuar um update, o campo `type` não permite alteração, sendo necessário a exclusão e recriação do atributo para que seu tipo seja alterado (ex.: alterado de campo text para unique).
+* Ao efetuar um update, desconsiderar os campos marcados como obrigatórios. São obrigatórios apenas os campos ``attribute_id`` e ``attribute_name``, para o update de atributo e campos ``value_id`` e ``value_name``, para update de um valor de atributo.
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
+    + Body
+
+            [
+                {
+                    "attribute_name": "Produtor",
+                    "type": "unique",
+                    "reference_id": "id_do_erp",
+                    "values": [
+                        {"value_name": "Finca Las Moras", "reference_id": "id_do_erp2",},
+                        {"value_name": "Raka", "reference_id": "id_do_erp3",},
+                        {"value_name": "Pradorey - Real Sitio de Ventosilla", "reference_id": "id_do_erp4",}
+                    ]
+                },
+                {
+                    "attribute_name": "Caracteristicas Organolépticas",
+                    "type": "text",
+                    "reference_id": "id_do_erp5",
+                },
+                {
+                    "attribute_id" : "300",
+                    "attribute_name": "Novo nome do atributo",
+                    "reference_id": "id_do_erp6",
+                    "values": [
+                        {"value_id": 11, "value_name": "Um update no valor", "reference_id": "id_do_erp7",}
+                    ]
+                }
+            ]
+
++ Response 200 (application/json)
+    + Body
+
+            [
+                {
+                    "attribute_id": 123,
+                    "success": true,
+                    "message": "Mensagem de erro (quando houver)",
+                    "reference_id": "id_do_erp",
+                    "values": [
+                        {"value_id": 11, "success": true, "reference_id": "id_do_erp2"},
+                        {"value_id": 12, "success": true, "reference_id": "id_do_erp3"},
+                        {"value_id": 13, "success": false, "message": "ERRO", "reference_id": "id_do_erp4"}
+                    ]
+                },
+                {
+                    "attribute_id": 101,
+                    "success": true,
+                    "message": "Mensagem de erro (quando houver)",
+                    "reference_id": "id_do_erp5"
+                },
+                {
+                    "attribute_id": 300,
+                    "success": true,
+                    "reference_id": "id_do_erp6",
+                    "values": [
+                        {"value_id": 11, "success": true, "reference_id": "id_do_erp7"}
+                    ]
+                },
+            ]
+
+##  Remover atributos [DELETE /attributes/attribute_id/{attribute_id}]
+
++ Parameters
+    + attribute_id: `101` (number) - O **código do atributo** que deseja excluir.
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
++ Response 200 (application/json)
+
+    + Body
+
+            { "success": true }
+
+##  Remover valor do atributo [DELETE /attributes/value_id/{value_id}]
+
++ Parameters
+    + value_id: `11` (number) - O **código do valor** que deseja excluir.
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
++ Response 200 (application/json)
+
+    + Body
+
+            { "success": true }
+
+# Clientes [/customers]
+Todos os recursos de API dos clientes.
+
+| Campo                                 | Tipo         | Descrição |
+|---------------------------------------|--------------|-----------|
+| `customer_id`                         | integer      | Id do cliente no e-commerce |
+|`email` <br>**obrigatório**            | string       | Email     |
+|`rg`                                   | string       | Rg        |
+|`persontype`                           | string       | Tipo de pessoa (PF/PJ)|
+|`companyname`                          | string       | Razão Social|
+|`fantasyname`                          | string       | Nome Fantasia|
+|`ie`                                   | string       | Inscrição Estadual|
+|`firstname`                            | string       | Nome      |
+|`lastname`                             | string       | Sobrenome |
+|`taxvat`                               | string       | CPF/CNPJ  |
+|`dob`                                  | date         | Data de Nascimento |
+|`gender`                               | string       | Sexo do cliente |
+| [**billing_address**](#Address)*      | ***object*** | Informações do endereço de cobrança |
+| [**shipping_address**](#Address)*     | ***object*** | Informações do endereço de entrega |
+
+***Address*** <a name="Address"></a>
+
+| Campo         | Tipo   | Descrição   |
+|---------------|--------|-------------|
+|`street`       | string | Rua         |
+|`number`       | string | Número      |
+|`complement`   | string | Complemento |
+|`neighborhood` | string | Bairro      |
+|`postcode`     | string | CEP         |
+|`telephone`    | string | Telefone    |
+|`region`       | string | Estado      |
+|`city`         | string | Cidade      |
+
+##  Listar clientes [GET /customers{?id,limit,page,lastERPUpdate}]
+
+* No Header da Response é possível obter informações como o número de objetos e páginas (vide exemplos)
+
++ Parameters
+    + id: `99` (number, optional) - O **código do cliente** que deseja consultar.
+    + page: `3` (number, optional) - A **página** da coleção de clientes que será retornado.
+        + Default: `1`
+    + limit: `100` (number, optional) - A **quantidade limite** que deseja retornar da lista de clientes.
+        + Default: `100`
+    + lastERPUpdate: `2016-11-28 00:00:0` (date, optional) - A data da ultima busca que o ERP fez na API para clientes. Retorna apenas os clientes que tiveram dados atualizados após a última integração.
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
++ Response 200 (application/json)
+
+
+    + Headers
+
+            Totalcount: 7 (o número total de objetos com o filtro especificado.)
+            Totalpages: 2 (o número total de páginas com o filtro especificado.)
+
+    + Body
+
+            [
+              {
+                "customer_id": "9",
+                "email": "fulano@email.com.br",
+                "ie": "",
+                "rg": "1245611",
+                "firstname": "Fulano",
+                "lastname": "Silva",
+                "taxvat": "13901292250",
+                "dob": "1994-02-18 00:00:00",
+                "gender": "Male",
+                "billing_address": {
+                  "street": "Rua Teste",
+                  "number": "63",
+                  "complement": "",
+                  "neighborhood": "Centro",
+                  "postcode": "89021-110",
+                  "telephone": "(47) 3322-0012",
+                  "region": "Santa Catarina",
+                  "city": "Blumenau"
+                },
+                "shipping_address": {
+                  "street": "Rua Teste",
+                  "number": "63",
+                  "complement": "ao lado da padaria",
+                  "neighborhood": "Centro",
+                  "postcode": "89021-110",
+                  "telephone": "(47) 3322-0012",
+                  "region": "Santa Catarina",
+                  "city": "Blumenau"
+                }
+              },
+              {
+                "customer_id": "7",
+                "email": "ciclano@email.com.br",
+                "firstname": "Ciclano ",
+                "lastname": "Santos",
+                "taxvat": "19760303159",
+                "dob": "1998-12-08 00:00:00",
+                "gender": "Male",
+                "billing_address": {
+                  "street": "Rua Teste",
+                  "number": " 291",
+                  "complement": "",
+                  "neighborhood": "Centro",
+                  "postcode": "89021-110",
+                  "telephone": "(47) 3322-0012",
+                  "region": "Santa Catarina",
+                  "city": "Blumenau"
+                },
+                "shipping_address": {
+                  "street": "Rua Teste",
+                  "number": " 291",
+                  "complement": "",
+                  "neighborhood": "Centro",
+                  "postcode": "89021-110",
+                  "telephone": "(47) 3322-0012",
+                  "region": "Santa Catarina",
+                  "city": "Blumenau"
+                }
+              }
+            ]
+
+##  Salvar dados cliente [POST /customers]
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
+
+    + Body
+
+            [
+                {
+                    "email": "email@example.com"
+                }
+            ]
+
++ Response 200 (application/json)
+    + Body
+
+            [
+                {
+                    "email": "email@example.com",
+                    "success": true
+                }
+            ]
+            
+
+# Pedidos [/orders]
+Todos os recursos de API dos pedidos.
+
+##  Listar novos pedidos [GET /orders{?increment_id,api_order_id,limit,page,lastERPUpdate}]
+
++ Parameters
+    + increment_id: `99` (number, optional) - O **código do pedido** que deseja consultar.
+    + api_order_id: `11` (text, optional) - O **código do pedido ERP** que deseja consultar.
+    + page: `3` (number, optional) - A **página** da coleção de pedidos que será retornado.
+        + Default: `1`
+    + limit: `100` (number, optional) - A **quantidade limite** que deseja retornar da lista de pedidos.
+        + Default: `100`
+    + lastERPUpdate: `2016-11-28 00:00:00` (date, optional) - A data da ultima busca que o ERP fez na API para pedidos. Retorna apenas os pedidos que tiveram status atualizados (pagos) após a última integração.
+
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
++ Response 200 (application/json)
+
+    + Headers
+
+            Totalcount: 7 (o número total de objetos com o filtro especificado.)
+            Totalpages: 2 (o número total de páginas com o filtro especificado.
+
+    + Body
+
+            [
+                {
+                    "increment_id": "200000001",
+                    "status": "complete",
+                    "state": "complete",
+                    "grand_total": 94.59,
+                    "subtotal": 79.80,
+                    "installments": 1,
+                    "cc_type": "VI",
+                    "created_at": "2017-05-24 09:39:19",
+                    "updated_at": "2017-05-24 09:45:08",
+                    "shipping_method": "pedroteixeira_correios_41068",
+                    "shipping_description": "Correios - PAC - Em média 8 dia(s)",
+                    "shipping_amount": "16.8000",
+                    "payment_method": "braspag_cc",
+                    "items": [
+                        {
+                            "qty": 5,
+                            "sku": "vinho-marca-2013",
+                            "name": "Vinho Marca 2013",
+                            "price": 39.80,
+                            "discount": 1.00
+                        },
+                        {
+                            "qty": 5,
+                            "sku": "vinho-marca-2013",
+                            "name": "Vinho Marca 2013",
+                            "price": 39.80,
+                            "discount": 1.00
+                        }
+                    ],
+                    "billing_addresss": {
+                        "street": "Rua Teste",
+                        "number": " 291",
+                        "complement": "",
+                        "neighborhood": "Centro",
+                        "postcode": "89021-110",
+                        "telephone": "(47) 3322-0012",
+                        "region": "Santa Catarina",
+                        "city": "Blumenau"
+                    },
+                    "shipping_addresss": {
+                        "street": "Rua Teste",
+                        "number": " 291",
+                        "complement": "",
+                        "neighborhood": "Centro",
+                        "postcode": "89021-110",
+                        "telephone": "(47) 3322-0012",
+                        "region": "Santa Catarina",
+                        "city": "Blumenau"
+                    },
+                    "customer": {
+                        "email": "email@exemplo.com",
+                        "firstname": "André Felipe",
+                        "lastname": "Teixeira da Luz",
+                        "taxvat": "01234567890"
+                    }
+                }
+            ]
+
+##  Listar status de pedido [GET /statuses]
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
++ Response 200 (application/json)
+    + Body
+
+            [
+                {
+                    "state": "complete",
+                    "status": "complete",
+                    "name": "Pedido Finalizado"
+                },
+                {
+                    "state": "pending",
+                    "status": "pending_payment",
+                    "name": "Aguardando Pagamento"
+                }
+            ]
+
+##  Listar pagamentos [GET /payments{?limit,page}]
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
++ Response 200 (application/json)
+    + Body
+
+            [
+                {
+                    "code": "braspag",
+                    "title": "Cartão de Crédito"
+                },
+                {
+                    "code": "boleto",
+                    "title": "Boleto Bancário"
+                }
+            ]
+
+##  Listar bandeiras cartão de crédito [GET /payments/cctypes]
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "AE": "American Express",
+                "VI": "Visa",
+                "MC": "MasterCard",
+                "DI": "Discover",
+                "JCB": "JCB",
+                "SM": "Switch/Maestro",
+                "SO": "Solo",
+                "DN": "Diners Club",
+                "EL": "Elo",
+                "OT": "Other"
+            }
+
+##  Listar websites [GET /websites]
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
++ Response 200 (application/json)
+    + Body
+
+            [
+                {
+                    "website_id": "2",
+                    "code": "johny",
+                    "name": "Johny Fox",
+                    "sort_order": "0",
+                    "default_group_id": "1",
+                    "is_default": "0"
+                },
+                {
+                    "website_id": "1",
+                    "code": "base",
+                    "name": "Website Principal",
+                    "sort_order": "0",
+                    "default_group_id": "5",
+                    "is_default": "1"
+                }
+            ]
+
+##  Listar entregas [GET /shippings]
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
++ Response 200 (application/json)
+    + Body
+
+            [
+                {
+                    "code": "pedroteixeira_correios_40010",
+                    "title": "Correios - Sedex"
+                },
+                {
+                    "code": "transportadora_braspag",
+                    "title": "Transportadora - Braspag"
+                }
+            ]
+
+
+## Salvar novos pedidos [POST /checkout]
+   
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+            
+    + Body
+
+            {
+                "billing" : {
+                    "firstname" : "name",
+                    "middlename" : "middlename",
+                    "lastname" : "lastname",
+                    "taxvat": "01234567890",
+                    "company" : "company",
+                    "email" : "asdf@asdf.com.br",
+                    "street": "address2",
+                    "number": "123",
+                    "complement": "complement",
+                    "neighborhood": "bairro",
+                    "city" : "city",
+                    "region" : "sc",
+                    "postcode" : "89560-000",
+                    "country_id" : "BR",
+                    "telephone" : 9809808098,
+                    "fax" : 123123123123,
+                    "save_in_address_book" : 1,
+                    "use_for_shipping" : 0
+                },
+                "shipping" : {
+                    "firstname": "name",
+                    "middlename": "middlename",
+                    "lastname": "lastname",
+                    "company": "company",
+                    "street": "address2",
+                    "number": "123",
+                    "complement": "complement",
+                    "neighborhood": "bairro",
+                    "city": "city",
+                    "region": "sc",
+                    "postcode": "89560-000",
+                    "country_id": "BR",
+                    "telephone": 9809808098,
+                    "fax": 123123123123,
+                    "save_in_address_book": 1
+                },
+                "shipping_method": "flatrate_flatrate",
+                "api_order_id": "SEU_ID",
+                "payment" : {
+                    "payment_method": "ccsave",
+                    "additional_data1": "dado 1",
+                    "additional_data2": "dado 2"
+                },
+                "products" : [
+                    {
+                        "sku":"msj006c-Royal Blue-L",
+                        "quantity": 2
+                    },
+                    {
+                        "sku":"msj006c-Royal Blue-M",
+                        "quantity": 3
+                    }
+                ]
+            }
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "success":true,
+                "increment_id":"145000014"
+            }
+            
+
+##  Salvar rastreio do pedido [POST /trackings]
+
+| Campo               | Tipo    | Descrição                                       |
+|---------------------|---------|-------------------------------------------------|
+| `increment_id`      | string  | Increment Id do pedido, identificador do pedido |
+| `tracking`          | string  | Código de rastreio do pedido                    |
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
+    + Body
+
+            [
+                {
+                    "increment_id": "100000001",
+                    "tracking": "SE9999999BR"
+                },
+                {
+                    "increment_id": "100000002",
+                    "tracking": "PC9999999BR"
+                }
+            ]
+
++ Response 200 (application/json)
+    + Body
+
+            [
+                {
+                    "increment_id": "100000001",
+                    "success": true
+                }
+            ]
+            
+##  Cancelar pedido [POST /orders/{increment_id}/cancel]
+
+| Campo               | Tipo    | Descrição                                       |
+|---------------------|---------|-------------------------------------------------|
+| `increment_id`      | string  | Increment Id do pedido, identificador do pedido |
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
+    + Body
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "success": true,
+                "message": ""
+            }
+            
+##  Faturar pedido [POST /orders/{increment_id}/invoice]
+
+| Campo               | Tipo    | Descrição                                       |
+|---------------------|---------|-------------------------------------------------|
+| `increment_id`      | string  | Increment Id do pedido, identificador do pedido |
+
++ Request (application/json)
+
+    + Headers
+
+            Token: {auth_key}
+
+    + Body
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "success": true,
+                "message": ""
+            }
+            
+# Exemplos [/exemplos]
+Exemplos de requisições para esclarecimento das funcionladades possíveis
+
+## Exemplo envio de atributos [POST /attributes]
+
++ Request (application/json)
+
+
+    + Headers
+
+            Token: {auth_key}
+
+    + Body
+
+            [
+                {
+                    "attribute_name": "Produtor",
+                    "type": "unique",
+                    "reference_id": "1199",
+                    "values": [
+                        {"value_name": "Finca Las Moras", "reference_id": "2199"},
+                        {"value_name": "Raka", "reference_id": "3199"},
+                        {"value_name": "Pradorey - Real Sitio de Ventosilla", "reference_id": "4199"}
+                    ]
+                },
+                {
+                    "attribute_name": "Classificação",
+                    "type": "unique",
+                    "reference_id": "821",
+                    "values": [
+                        {"value_name": "Espumante", "reference_id": "822"},
+                        {"value_name": "Azeite", "reference_id": "823"},
+                        {"value_name": "Tinto", "reference_id": "824"},
+                        {"value_name": "Suave", "reference_id": "825"},
+                        {"value_name": "Seco", "reference_id": "826"}
+                    ]
+                },
+                {
+                    "attribute_name": "Caracteristicas Organolépticas",
+                    "type": "text",
+                    "reference_id": "934"
+                },
+                {
+                    "attribute_name": "Ingredientes",
+                    "type": "multiple",
+                    "reference_id": "7411",
+                    "values": [
+                        {"value_name": "Água", "reference_id": "7412"},
+                        {"value_name": "Ácido acético", "reference_id": "7413"},
+                        {"value_name": "Açucar", "reference_id": "7414"}
+                    ]
+                }
+            ]
+
++ Response 200 (application/json)
+    + Body
+
+            [
+                {
+                    "attribute_id": 1, // Produtor
+                    "success": true,
+                    "reference_id": "1199",
+                    "values": [
+                        {"value_id": 11, "success": true, "reference_id": "2199"}, // Finca Las Moras
+                        {"value_id": 12, "success": true, "reference_id": "3199"}, // Raka
+                        {"value_id": 13, "success": true, "reference_id": "4199"}  // Pradorey - Real Sitio de Ventosilla
+                    ]
+                },
+                {
+                    "attribute_id": 2, // Classificação
+                    "success": true,
+                    "reference_id": "821",
+                    "values": [
+                        {"value_id": 21, "success": true, "reference_id": "822"}, // Espumante
+                        {"value_id": 22, "success": true, "reference_id": "823"}, // Azeite
+                        {"value_id": 23, "success": true, "reference_id": "824"}, // Tinto
+                        {"value_id": 24, "success": true, "reference_id": "825"}, // Suave
+                        {"value_id": 25, "success": true, "reference_id": "826"}  // Seco
+                    ]
+                },
+                {
+                    "attribute_id": 101, // Caracteristicas Organolépticas
+                    "success": true,
+                    "reference_id": "934"
+                },
+                {
+                    "attribute_id": 77, // Ingredientes
+                    "success": true,
+                    "reference_id": "7411",
+                    "values": [
+                        {"value_id": 83, "success": true, "reference_id": "7412"}, // Água
+                        {"value_id": 84, "success": true, "reference_id": "7413"}, // Ácido acético
+                        {"value_id": 85, "success": true, "reference_id": "7414"}  // Açucar
+                    ]
+                },
+            ]
+
+## Exemplo envio de produtos [POST /products]
+
++ Request (application/json)
+
+
+    + Headers
+
+            Token: {auth_key}
+
+    + Body
+
+            [
+                {
+                    "sku": "raka-pinotage-2013-00038413",
+                    "name": "Raka Pinotage 2013 (750ml)",
+                    "price": 76.40,
+                    "description": "De padrão mediterrânico fresco; Grande influência fria da baía de Walker; No verão, os ventos frios do sudeste sopram do Oceano Índico através da região de Agulhas.<br />Cor rubi concentrada, tons purpúreos. Frutos vermelhos, couro, folha de chá seca, banana caramelizada e tabaco. Encorpado, com taninos ligeiramente firmes, fresco e com boa persistência.",
+                    "short_description": "Vinho recomendado para momentos especiais.",
+                    "enabled": true,
+                    "ean": "00038413",
+                    "height": 30,
+                    "width": 5,
+                    "length": 5,
+                    "weight": 750,
+                    "website_ids": [2, 5],
+                    "attributes": [
+                        {"attribute_id": 1, "value_id": 12}, // Produtor: Raka
+                        {"attribute_id": 2, "value_id": 23}, // Classificação: Tinto
+                        {"attribute_id": 101, "value": "Cor rubi concentrada, tons purpúreos. Frutos vermelhos, couro, folha de chá seca, banana caramelizada e tabaco. Encorpado, com taninos ligeiramente firmes, fresco e com boa persistência."}, // Caracteristicas Organolépticas: Cor rubi concentrada, tons purpúreos. Frutos vermelhos, couro, folha de chá seca, banana caramelizada e tabaco. Encorpado, com taninos ligeiramente firmes, fresco e com boa persistência.
+                        {"attribute_id": 77, "values": // Ingredientes: Água, Açucar
+                            [
+                                {"value_id": 83},
+                                {"value_id": 85}
+                            ]
+                        }
+                    ]
+                }
+            ]
+
++ Response 200 (application/json)
+    + Body
+
+            [
+                {"sku": "raka-pinotage-2013-00038413", "success": true}
+            ]
+            
+# Paises [/getCountries]
+
+## Exemplo de Requisição [GET]
++ Request
+    + Headers
+    
+            Token: {auth_key}
+        
++ Response 200 (application/json)
+    + Body
+    
+            [
+                {
+                    "name": "Andorra",
+                    "id": "AD"
+                },
+                {
+                    "name": "Emirados Árabes Unidos",
+                    "id": "AE"
+                }
+            ]
+            
+# Estimativa de frete [/estimate]
+
+## Exemplo de Requisição [POST]
+| Campo                         | Tipo    | Descrição                                  |
+|-------------------------------|---------|--------------------------------------------|
+| `sku` <br>**obrigatório**     | string  | SKU do produto                             |
+| `qty` <br>**obrigatório**     | string  | Quantidade do produto a ser cotada         |
+| `postcode` <br>**obrigatório**| string  | CEP a ser cotado                           |
++ Request
+    + Headers
+    
+            Token: {auth_key}
+        
++ Response 200 (application/json)
+    + Body
+    
+            [
+                {
+                    "sku":"msj006c-Red-L",
+                    "qty":"1",
+                    "postcode":"89062101"
+                }
+            ]
+            
+# Estimativa de frete no carrinho [/estimatecart]
+
+## Exemplo de Requisição [POST]
+| Campo                         | Tipo    | Descrição                                  |
+|-------------------------------|---------|--------------------------------------------|
+| `sku` <br>**obrigatório**     | string  | SKU do produto                             |
+| `qty` <br>**obrigatório**     | string  | Quantidade do produto a ser cotada         |
+| `postcode` <br>**obrigatório**| string  | CEP a ser cotado                           |
++ Request
+    + Headers
+    
+            Token: {auth_key}
+        
++ Response 200 (application/json)
+    + Body
+    
+            {
+                "products":[
+                {
+                    "sku":"msj006c-Red-L",
+                    "qty":"1"
+                },
+                {
+                    "sku":"wbk012c-Pink-S",
+                    "qty":"3"
+                }
+                ],
+                "postcode":"89062101"
+            }
+    
+
+
+
+    
+
+
