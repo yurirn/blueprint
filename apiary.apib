@@ -1,0 +1,459 @@
+FORMAT: 1A
+HOST: http://sualoja.com.br/rest/v1
+
+# Ind ecommerce
+
+Esta documentação tem por objetivo classificar e definir a relação técnica de integração entre API do e-commerce para integração com ERP.
+
+# Autenticação
+A API utilizará autenticação informando chave pelo HEADER da conexão. Será fornecido pela indecommerce a chave de autenticação. Para ambientes de produção, as requisições devem ser efetuadas utilizando-se de HTTPS (protocolo HTTP Seguro).
+
+#imagens
+Todas as imagens enviadas pela integração serão no formato BASE64. As imagens devem ser informadas na extensão JPG, GIF e PNG.
+
+#Métodos
+A indecommerce-WS utiliza o padrão REST através do protocolo HTTPS. Os métodos variam de acordo com a função utilizada:
+<table>
+<thead>
+<tr>
+<th>Método</th>
+<th>Ação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td>Consulta</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td>Inseração/Atualização</td>
+</tr>
+</tbody>
+</table>
+
+#Tipo de dados
+
+<table>
+<thead>
+<tr>
+<th>Tipo</th>
+<th>Formato</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>string</td>
+<td>"texto"</td>
+</tr>
+<tr>
+<td>bolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>integer</td>
+<td>10</td>
+</tr>
+<tr>
+<td>double</td>
+<td>10.2</td>
+</tr>
+<tr>
+<td>text</td>
+<td>"texto"</td>
+</tr>
+<tr>
+<td>objeto</td>
+<td>{}</td>
+</tr>
+<tr>
+<td>date</td>
+<td>"2016-11-28 00:00:00"</td>
+</tr>
+<tr>
+<td>mimetype</td>
+<td>"image/png"</td>
+</tr>
+<tr>
+<td>base64</td>
+<td>dGVzdGU=</td>
+</tr>
+</tbody>
+</table>
+
+# URL Base API
+<table>
+<thead>
+<tr>
+<th>URL Staging (<em>testes</em>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="http://XXXXX.indecommerceshop.com/rest/v1">http://XXXXX.indecommerceshop.com/rest/v1</a></td>
+</tr>
+</tbody>
+</table>
+
+#Código de Status HTTPS
+<table>
+<thead>
+<tr>
+<th>Código</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>OK</td>
+</tr>
+<tr>
+<td>400</td>
+<td>Bad Request</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Forbidden</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Not Found</td>
+</tr>
+<tr>
+<td>500</td>
+<td>Internal Server Error</td>
+</tr>
+</tbody>
+</table>
+
+#Retornos com ERROS
+
+<p>Todos os retornos com erros serão retornados com o <code>BODY</code> no formato:</p>
+
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Tipo</th>
+<th>Observação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>success</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td>text</td>
+<td>Mensagem com a descrição do erro</td>
+</tr>
+</tbody>
+</table>
+
+<ul>
+<li>Exemplo:<pre><code class="js:">{
+    "success": false,
+    "message": "Fromato JSON incorreto"
+}
+</code></pre>
+</li>
+</ul>
+
+<p>Nos casos de validação de dados ou erros específicos, poderá ser retornado no próprio item a definição e descrição do erro</p>
+
+<ul>
+<li>Exemplo:<pre><code class="js:">[
+    {
+        "sku": "vinho-marca-1999",
+        "success": false,
+        "message": "SKU não encontrado"
+    },
+    {
+        "sku": "vinho-marca-2016",
+        "success": true
+    }
+]
+</code></pre>
+</li>
+</ul>
+
+## PRODUTOS [/products]
+
+### Salvar produto [POST]
+<ul>
+<li>Recomendamos que o envio seja feito em forma de lotes, enviando de 100 em 100 produtos por vez, por exemplo.</li>
+</ul>
+
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Tipo</th>
+<th>Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sku</code> <br><strong>obrigatório</strong></td>
+<td>string</td>
+<td>Código SKU <br><strong>Obs</strong>: É a unidade identificadora do produto na Loja, um ID de produto.</td>
+</tr>
+<tr>
+<td><code>name</code> <br><strong>obrigatório</strong></td>
+<td>string</td>
+<td>Nome</td>
+</tr>
+<tr>
+<td><code>price</code> <br><strong>obrigatório</strong></td>
+<td>double</td>
+<td>Preço      <br><strong>Obs</strong>: Preço sem desconto, que é enviado na api de preços</td>
+</tr>
+<tr>
+<td><code>description</code> <br><strong>obrigatório</strong></td>
+<td>text</td>
+<td>Descrição  <br><strong>Obs</strong>: Aceita HTML</td>
+</tr>
+<tr>
+<td><code>short_description</code> <br><strong>obrigatório</strong></td>
+<td>text</td>
+<td>Descrição curta <br><strong>Obs</strong>: Aceita HTML</td>
+</tr>
+<tr>
+<td><code>enabled</code> <br><strong>obrigatório</strong></td>
+<td>boolean</td>
+<td>Ativo      <br><strong>Obs</strong>: Produto está habilitado ou desabilitado</td>
+</tr>
+<tr>
+<td><code>ean</code></td>
+<td>string</td>
+<td>Código EAN <br><strong>Obs</strong>: Código de barras, obrigatório para integrações com o Google e marketplaces</td>
+</tr>
+<tr>
+<td><code>height</code></td>
+<td>integer</td>
+<td>Altura     <br><strong>Obs</strong>: Em centímetros</td>
+</tr>
+<tr>
+<td><code>width</code></td>
+<td>integer</td>
+<td>Largura    <br><strong>Obs</strong>: Em centímetros</td>
+</tr>
+<tr>
+<td><code>length</code></td>
+<td>integer</td>
+<td>Comprimento <br><strong>Obs</strong>: Em centímetros</td>
+</tr>
+<tr>
+<td><code>weight</code> <br><strong>obrigatório</strong></td>
+<td>integer</td>
+<td>Peso       <br><strong>Obs</strong>: Em gramas</td>
+</tr>
+<tr>
+<td><code>category_ids</code></td>
+<td>array</td>
+<td>Id de categorias do produto       <br><strong>Obs</strong>: Em forma de lista: [57, 59]</td>
+</tr>
+<tr>
+<td><a href="#Attribute"><strong>attributes</strong></a>*</td>
+<td><strong><em>object</em></strong></td>
+<td>Atributos adicionais as informações do produto</td>
+</tr>
+</tbody>
+</table>
+
+
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Tipo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>attribute_id</code></td>
+<td>integer</td>
+</tr>
+<tr>
+<td><code>value_id</code></td>
+<td>integer</td>
+</tr>
+</tbody>
+</table>
+
+<ul>
+<li>Ao efetuar um update, desconsiderar os campos marcados como obrigatórios. É obrigatório apenas <code>sku</code></li>
+</ul>
+<p><strong><em>Attribute</em></strong> <a name="Attribute"></a></p>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Tipo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>attribute_id</code></td>
+<td>integer</td>
+</tr>
+<tr>
+<td><code>value_id</code></td>
+<td>integer</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Ao efetuar um update, desconsiderar os campos marcados como obrigatórios. É obrigatório apenas <code>sku</code></li>
+</ul>
+
+
++ Request (application/json)
+
+    + Headers
+    
+            Token: {api_key}
+            
+    + Body
+
+        [
+          {
+            "sku": "vinho-marca-2013",
+            "name": "Vinho Marca 2013",
+            "price": 1.99,
+            "description": "Descrição comprida (aceita HTML)",
+            "short_description": "Descrição curta (aceita HTML)",
+            "enabled": true,
+            "ean": "016832",
+            "height": 30,
+            "width": 21,
+            "length": 15,
+            "weight": 300,
+            "category_ids": [
+              58,
+              57
+            ],
+            "attributes": [
+              {
+                "attribute_id": 123,
+                "values": [
+                  {
+                    "value_id": 11
+                  },
+                  {
+                    "value_id": 12
+                  }
+                ]
+              },
+              {
+                "attribute_id": 123,
+                "value_id": 13
+              },
+              {
+                "attribute_id": 101,
+                "value": "Cor rubi concentrada, borda purpúrea luminosa. Nariz maduro de frutas vermelhas, chocolate e especiarias doces. Os taninos estão muito finos, o conjunto fácil de gostar, encorpado e muito persistente."
+              }
+            ]
+          },
+          {
+            "name": "Luigi Bosca Malbec DOC 2013 (750ml)",
+            "description": "Descrição comprida (aceita HTML)",
+            "short_description": "Descrição curta (aceita HTML)",
+            "sku": "vinho-2013-7972",
+            "price": 1.99,
+            "enabled": true,
+            "ean": "016833",
+            "height": 30,
+            "width": 21,
+            "length": 15,
+            "weight": 300,
+            "category_ids": [
+              57,
+              63
+            ],
+            "configurable": {
+              "skus": [
+                "00002910",
+                "00003715",
+                "009025",
+                "00173113"
+              ],
+              "attributes": [
+                1068,
+                1069
+              ]
+            }
+          }
+        ]
+
+        
++ Response 201 (application/json)
+
+    + Body
+
+        [
+          {
+            "sku": "vinho-marca-2013",
+            "success": true
+          },
+          {
+            "sku": "vinho-marca-2016",
+            "success": false,
+            "message": "Campo attributes com formato incorreto"
+          }
+        ]
+        
+    
+
+### Create a New Question [POST]
+
+You may create your own question using this action. It takes a JSON
+object containing a question and a collection of answers in the
+form of choices.
+
++ Request (application/json)
+
+        {
+            "question": "Favourite programming language?",
+            "choices": [
+                "Swift",
+                "Python",
+                "Objective-C",
+                "Ruby"
+            ]
+        }
+
++ Response 201 (application/json)
+
+    + Headers
+
+            Location: /questions/2
+
+    + Body
+
+            {
+                "question": "Favourite programming language?",
+                "published_at": "2015-08-05T08:40:51.620Z",
+                "choices": [
+                    {
+                        "choice": "Swift",
+                        "votes": 0
+                    }, {
+                        "choice": "Python",
+                        "votes": 0
+                    }, {
+                        "choice": "Objective-C",
+                        "votes": 0
+                    }, {
+                        "choice": "Ruby",
+                        "votes": 0
+                    }
+                ]
+            }
